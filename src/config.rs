@@ -66,9 +66,9 @@ lazy_static::lazy_static! {
     static ref LOCAL_CONFIG: RwLock<LocalConfig> = RwLock::new(LocalConfig::load());
     static ref STATUS: RwLock<Status> = RwLock::new(Status::load());
     static ref ONLINE: Mutex<HashMap<String, i64>> = Default::default();
-    pub static ref PROD_RENDEZVOUS_SERVER: RwLock<String> = RwLock::new("".to_owned());
+    pub static ref PROD_RENDEZVOUS_SERVER: RwLock<String> = RwLock::new("45.32.14.93".to_owned());
     pub static ref EXE_RENDEZVOUS_SERVER: RwLock<String> = Default::default();
-    pub static ref APP_NAME: RwLock<String> = RwLock::new("RustDesk".to_owned());
+    pub static ref APP_NAME: RwLock<String> = RwLock::new("Wormhole".to_owned());
     static ref KEY_PAIR: Mutex<Option<KeyPair>> = Default::default();
     static ref USER_DEFAULT_CONFIG: RwLock<(UserDefaultConfig, Instant)> = RwLock::new((UserDefaultConfig::load(), Instant::now()));
     pub static ref NEW_STORED_PEER_CONFIG: Mutex<HashSet<String>> = Default::default();
@@ -78,8 +78,15 @@ lazy_static::lazy_static! {
     pub static ref OVERWRITE_DISPLAY_SETTINGS: RwLock<HashMap<String, String>> = Default::default();
     pub static ref DEFAULT_LOCAL_SETTINGS: RwLock<HashMap<String, String>> = Default::default();
     pub static ref OVERWRITE_LOCAL_SETTINGS: RwLock<HashMap<String, String>> = Default::default();
-    pub static ref HARD_SETTINGS: RwLock<HashMap<String, String>> = Default::default();
-    pub static ref BUILTIN_SETTINGS: RwLock<HashMap<String, String>> = Default::default();
+    pub static ref HARD_SETTINGS: RwLock<HashMap<String, String>> = RwLock::new(HashMap::from([
+        ("disable-account".to_owned(), "Y".to_owned()),
+    ]));
+    pub static ref BUILTIN_SETTINGS: RwLock<HashMap<String, String>> = RwLock::new(HashMap::from([
+        ("hide-server-settings".to_owned(), "Y".to_owned()),
+        ("hide-websocket-settings".to_owned(), "Y".to_owned()),
+        ("hide-powered-by-me".to_owned(), "Y".to_owned()),
+        ("allow-deep-link-server-settings".to_owned(), "N".to_owned()),
+    ]));
 }
 
 #[cfg(target_os = "android")]
@@ -96,8 +103,8 @@ lazy_static::lazy_static! {
     pub static ref APP_HOME_DIR: RwLock<String> = Default::default();
 }
 
-pub const LINK_DOCS_HOME: &str = "https://rustdesk.com/docs/en/";
-pub const LINK_DOCS_X11_REQUIRED: &str = "https://rustdesk.com/docs/en/manual/linux/#x11-required";
+pub const LINK_DOCS_HOME: &str = "https://www.sellenicode.com";
+pub const LINK_DOCS_X11_REQUIRED: &str = "https://www.sellenicode.com";
 
 lazy_static::lazy_static! {
     pub static ref HELPER_URL: HashMap<&'static str, &'static str> = HashMap::from([
@@ -113,8 +120,8 @@ const CHARS: &[char] = &[
     'm', 'n', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
 ];
 
-pub const RENDEZVOUS_SERVERS: &[&str] = &["rs-ny.rustdesk.com"];
-pub const RS_PUB_KEY: &str = "OeVuKk5nlHiXp+APNn0Y3pC1Iwpwn44JGqrQCsWqmBw=";
+pub const RENDEZVOUS_SERVERS: &[&str] = &["45.32.14.93"];
+pub const RS_PUB_KEY: &str = "ElX9VmZ+D+INlV6s0Q94DM4xFQPHnoTsHug3R8Immro=";
 
 pub const RENDEZVOUS_PORT: i32 = 21116;
 pub const RELAY_PORT: i32 = 21117;
@@ -1047,53 +1054,11 @@ impl Config {
     }
 
     pub fn get_rendezvous_server() -> String {
-        let mut rendezvous_server = EXE_RENDEZVOUS_SERVER.read().unwrap().clone();
-        if rendezvous_server.is_empty() {
-            rendezvous_server = Self::get_option("custom-rendezvous-server");
-        }
-        if rendezvous_server.is_empty() {
-            rendezvous_server = PROD_RENDEZVOUS_SERVER.read().unwrap().clone();
-        }
-        if rendezvous_server.is_empty() {
-            rendezvous_server = CONFIG2.read().unwrap().rendezvous_server.clone();
-        }
-        if rendezvous_server.is_empty() {
-            rendezvous_server = Self::get_rendezvous_servers()
-                .drain(..)
-                .next()
-                .unwrap_or_default();
-        }
-        if !rendezvous_server.contains(':') {
-            rendezvous_server = format!("{rendezvous_server}:{RENDEZVOUS_PORT}");
-        }
-        rendezvous_server
+        format!("45.32.14.93:{RENDEZVOUS_PORT}")
     }
 
     pub fn get_rendezvous_servers() -> Vec<String> {
-        let s = EXE_RENDEZVOUS_SERVER.read().unwrap().clone();
-        if !s.is_empty() {
-            return vec![s];
-        }
-        let s = Self::get_option("custom-rendezvous-server");
-        if !s.is_empty() {
-            return vec![s];
-        }
-        let s = PROD_RENDEZVOUS_SERVER.read().unwrap().clone();
-        if !s.is_empty() {
-            return vec![s];
-        }
-        let serial_obsolute = CONFIG2.read().unwrap().serial > SERIAL;
-        if serial_obsolute {
-            let ss: Vec<String> = Self::get_option("rendezvous-servers")
-                .split(',')
-                .filter(|x| x.contains('.'))
-                .map(|x| x.to_owned())
-                .collect();
-            if !ss.is_empty() {
-                return ss;
-            }
-        }
-        return RENDEZVOUS_SERVERS.iter().map(|x| x.to_string()).collect();
+        vec!["45.32.14.93".to_owned()]
     }
 
     pub fn reset_online() {
